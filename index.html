@@ -1,1 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Список игр</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 5px 0; padding: 8px 12px; font-size: 16px; }
+        input { padding: 6px; font-size: 16px; }
+        ul { list-style-type: none; padding-left: 0; }
+        li { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Доступные игры</h1>
+    <ul id="game-list"></ul>
 
+    <input type="text" id="game-name" placeholder="Название игры" />
+    <button onclick="addGame()">Добавить игру</button>
+
+    <script>
+        const serverUrl = window.location.origin;
+
+        async function fetchGames() {
+            try {
+                const response = await fetch(`${serverUrl}/games`);
+                const games = await response.json();
+                const list = document.getElementById('game-list');
+                list.innerHTML = '';
+                games.forEach(game => {
+                    const li = document.createElement('li');
+                    const btn = document.createElement('button');
+                    btn.textContent = game;
+                    btn.onclick = () => alert(`Подключаемся к игре: ${game}`);
+                    li.appendChild(btn);
+                    list.appendChild(li);
+                });
+            } catch (e) {
+                console.error('Ошибка при загрузке игр:', e);
+            }
+        }
+
+        async function addGame() {
+            const nameInput = document.getElementById('game-name');
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('Введите название игры');
+                return;
+            }
+            try {
+                const response = await fetch(`${serverUrl}/games`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name})
+                });
+                if (response.status === 201) {
+                    nameInput.value = '';
+                    fetchGames();
+                } else {
+                    alert('Игра уже существует или ошибка');
+                }
+            } catch (e) {
+                alert('Ошибка при добавлении игры');
+                console.error(e);
+            }
+        }
+
+        // Обновляем список игр каждые 3 секунды
+        setInterval(fetchGames, 3000);
+        fetchGames();
+    </script>
+</body>
+</html>
